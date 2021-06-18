@@ -34,13 +34,16 @@ class PDnet(nn.Module):
         # 512, 64, 64
         self.bn8 = nn.BatchNorm2d(512)
         self.conv9 = nn.Conv2D(512, 512, 3, padding = 1)
+        # 512, 64, 64
         self.bn9 = nn.BatchNorm2d(512)
         # insert pooling layer 512, 32, 32
         self.conv10 = nn.Conv2D(512, 1024, 2, stride = 2, padding = 1)
         self.bn10 = nn.BatchNorm2d(1024)
         # 1024, 16, 16
 
+        # max pooling layer
         self.mpool = nn.MaxPool2d(2,2)
+        # average pooling layer
         selg.apool = nn.AvgPool2d(2,2)
 
         # Fully connected layers
@@ -48,12 +51,28 @@ class PDnet(nn.Module):
         self.fc2 = nn.Linear(1024, 128)
         self.fc3 = nn.Linear(128, 8)
 
+        # dropout layer
         self.dropout = nn.Dropout(p = 0.3)
 
     def forward(self, x):
 
-        
-
         # do the forward pass through the network
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = self.apool(F.relu(self.bn2(self.conv2(x))))
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = self.apool(F.relu(self.bn4(self.conv4(x))))
+        x = F.relu(self.bn5(self.conv5(x)))
+        x = F.relu(self.bn6(self.conv6(x)))
+        x = self.apool(F.relu(self.bn7(self.conv7(x))))
+        x = F.relu(self.bn8(self.conv8(x)))
+        x = self.mpool(F.relu(self.bn9(self.conv9(x))))
+        x = F.relu(self.bn10(self.conv10(x)))
 
-        return x
+        x = x.view(-1, 1024*16*16)
+
+        x = self.dropout(F.relu(self.fc1(x)))
+        x = self.dropout(F.relu(self.fc2(x)))
+
+        output = F.relu(self.fc3(x))
+
+        return output
