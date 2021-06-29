@@ -1,5 +1,7 @@
-model = Classifier()
-criterion = nn.NLLLoss(reduction='sum')
+from model import PDnet
+
+network = PDnet()
+criterion = nn.MSELoss(reduction='mean)
 optimizer = optim.Adam(model.parameters(), lr=0.003)
 
 epochs = 30
@@ -10,8 +12,8 @@ for e in range(epochs):
     for images, labels in trainloader:
         optimizer.zero_grad()
         
-        log_ps = model(images)
-        loss = criterion(log_ps, labels)
+        output = model(images)
+        loss = criterion(output, labels)
         tot_train_loss += loss.item()
         
         loss.backward()
