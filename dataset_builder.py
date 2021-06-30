@@ -59,3 +59,7 @@ for i in range(418):
     img_paths.remove('No file')
     labels.remove('No file')
     targets.remove('No file')
+
+for target in targets:
+    for i in range(len(target[0])):
+        target[0][i] = float(target[0][i])
