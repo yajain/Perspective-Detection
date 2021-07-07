@@ -2,15 +2,19 @@ import os
 import cv2
 import numpy as np
 import torch
-#from torch.utils.data import Dataset, DataLoader
+import pandas as pd
+from torch.utils.data import Dataset, DataLoader
 
 class PerspectiveDataset(Dataset):
     def __init__(self, img_paths, label_file):
         self.img_dim = (1024, 1024)
         self.data = []
-        df = pd.read_csv('data.csv', header = None)
-        for index, image in enumerate(os.listdir(img_paths)):
-            self.data.append([image, list(df.iloc(index)))
+        df = pd.read_csv(label_file, header = None)
+
+        with open (img_paths, 'r') as file:
+            for index, image in enumerate(file):
+                image = image[0:-1]
+                self.data.append([image, list(df.iloc[index])])
 
     def __len__(self):
         return len(self.data)
@@ -25,5 +29,7 @@ class PerspectiveDataset(Dataset):
         return img_tensor, label_tensor
 
 if __name__ == "__main__":
-    dataset = PerspectiveDataset()
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
+    train_set = PerspectiveDataset('train_img_paths.txt', 'train.csv')
+    trainloader = torch.utils.data.DataLoader(train_set, batch_size=8, shuffle=True)
+    test_set = PerspectiveDataset('test_img_paths.txt', 'test.csv')
+    testloader = torch.utils.data.DataLoader(test_set, batch_size=8, shuffle=True)
