@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 
 class PerspectiveDataset(Dataset):
     def __init__(self, img_paths, label_file):
-        self.img_dim = (1024, 1024)
+        self.img_dim = (512, 512)
         self.data = []
         df = pd.read_csv(label_file, header = None)
 
