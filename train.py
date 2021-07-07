@@ -1,4 +1,5 @@
 from model import PDnet
+import json
 
 use_cuda = torch.cuda.is_available()
 
@@ -14,6 +15,8 @@ if torch.cuda.device_count() > 1:
 epochs = 100
 
 train_losses, test_losses = [], []
+losses = {}
+
 for e in range(epochs):
     tot_train_loss = 0
     for images, labels in trainloader:
@@ -28,19 +31,19 @@ for e in range(epochs):
 
         loss.backward()
         optimizer.step()
-    else:
-        tot_test_loss = 0
 
-        # Turn off gradients for validation, saves memory and computations
-        with torch.no_grad():
-            for images, labels in testloader:
+    tot_test_loss = 0
 
-                images.to(device)
-                labels.to(device)
+    # Turn off gradients for validation, saves memory and computations
+    with torch.no_grad():
+        for images, labels in testloader:
 
-                outpput = network.forward(images)
-                loss = criterion(output, labels)
-                tot_test_loss += loss.item()
+            images.to(device)
+            labels.to(device)
+
+            outpput = network.forward(images)
+            loss = criterion(output, labels)
+            tot_test_loss += loss.item()
 
         # Get mean loss to enable comparison between train and test sets
         train_loss = tot_train_loss / len(trainloader.dataset)
@@ -53,3 +56,11 @@ for e in range(epochs):
         print("Epoch: {}/{}.. ".format(e+1, epochs),
               "Training Loss: {:.3f}.. ".format(train_loss),
               "Test Loss: {:.3f}.. ".format(test_loss))
+
+
+        losses[e+1] = [train_loss, test_loss]
+        with open('losses.json', 'w') as fp:
+            json.dump(losses, fp)
+
+        ckpt_name = 'ckpt/checkpoint_'+str(e+1)+'.pth'
+        torch.save(network.state_dict(), ckpt_name)
