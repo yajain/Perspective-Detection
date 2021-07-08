@@ -1,47 +1,69 @@
-from model import PDnet
 import json
+import torch.optim as optim
 
 use_cuda = torch.cuda.is_available()
 
+# create the network
 network = PDnet()
-criterion = nn.MSELoss(reduction='mean)
-optimizer = optim.Adam(model.parameters(), lr=0.003)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# create the loss function and the optimizer
+criterion = nn.MSELoss(reduction='mean')
+optimizer = optim.Adam(network.parameters(), lr=0.003)
+
+# find the gpus
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# putting the neural network on the gpus
 if torch.cuda.device_count() > 1:
-    model = nn.DataParallel(model)
-    model.to(device)
+    network = nn.DataParallel(network, device_ids = [0,1,2,3])
+    
+network = network.to(device)
 
 epochs = 100
 
 train_losses, test_losses = [], []
 losses = {}
 
+
 for e in range(epochs):
     tot_train_loss = 0
+    i = 0
     for images, labels in trainloader:
+        
         optimizer.zero_grad()
-
-        images.to(device)
-        labels.to(device)
-
+        
+        # move the images and the labels to the gpus
+        images = images.to(device)
+        images = images.float()
+        labels = labels.to(device)
+        labels = labels.float()
+        
+        #forward prop
         output = network.forward(images)
+        
+        # find the loss
         loss = criterion(output, labels)
         tot_train_loss += loss.item()
 
+        # back propagation
         loss.backward()
+        
+        # change the weights according to the loss function
         optimizer.step()
-
+        
     tot_test_loss = 0
 
     # Turn off gradients for validation, saves memory and computations
     with torch.no_grad():
         for images, labels in testloader:
 
-            images.to(device)
-            labels.to(device)
+            images = images.to(device)
+            images = images.float()
+            labels = labels.to(device)
+            labels = labels.float()
 
-            outpput = network.forward(images)
+            output = network.forward(images)
+
             loss = criterion(output, labels)
             tot_test_loss += loss.item()
 
